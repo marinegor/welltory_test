@@ -7,28 +7,32 @@ import sys
 import pathlib
 
 
-def check_if_not_empty(schema, event):
-    ...
-
-
 def print_validation_message(schema, event, validator=jsonschema.Draft7Validator):
     validator = validator(schema=schema)
-    for idx, error in enumerate(validator.descend(event, schema)):
-        error_message = error.message
-        schema_location = "::".join(error.absolute_schema_path)
-        event_location = "::".join(error.absolute_path)
 
-        if event_location == "":
-            event_location = "<root>"
-        if schema_location == "":
-            schema_location = "<root>"
+    # dummy checks
+    if not event:
+        print(f"  Message 1: event file is empty")
+    elif event.get("data", None) is None:
+        print(f"  Message 1: event file has no 'data' field")
+    else:
+        event = event["data"]
+        for idx, error in enumerate(validator.descend(event, schema)):
+            error_message = error.message
+            schema_location = "::".join(error.absolute_schema_path)
+            event_location = "::".join(error.absolute_path)
 
-        if error_message == "None is not of type 'object'":
-            error_message += ": the event file is probably empty"
+            if event_location == "":
+                event_location = "<root>"
+            if schema_location == "":
+                schema_location = "<root>"
 
-        print(f"  Message {idx+1}: {error_message}")
-        print(f"    Location in schema file: {schema_location}")
-        print(f"    Location in event file:  {event_location}")
+            if error_message == "None is not of type 'object'":
+                error_message += ": the event file is probably empty"
+
+            print(f"  Message {idx+1}: {error_message}")
+            print(f"    Location in schema file: {schema_location}")
+            print(f"    Location in event file:  {event_location}")
 
 
 def main(args):

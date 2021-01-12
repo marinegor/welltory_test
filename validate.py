@@ -2,12 +2,16 @@
 
 import argparse
 import json
-import jsonschema
-import sys
 import pathlib
+import sys
+import traceback
+
+import jsonschema
 
 
-def print_validation_message(schema, event, validator=jsonschema.Draft7Validator):
+def print_validation_message(
+    schema, event, validator=jsonschema.Draft7Validator
+):
     validator = validator(schema=schema)
 
     # dummy checks
@@ -15,7 +19,9 @@ def print_validation_message(schema, event, validator=jsonschema.Draft7Validator
         print(f"  Message 1: event file is empty")
     elif event.get("data", None) is None:
         print(f"  Message 1: event file has no 'data' field")
+
     else:
+        # main logic
         event = event["data"]
         for idx, error in enumerate(validator.descend(event, schema)):
             error_message = error.message
@@ -41,28 +47,64 @@ def main(args):
     )
 
     parser.add_argument(
-        "-s", "--schema", type=str, help="Input schemas folder or single file"
+        "-s",
+        "--schema",
+        type=pathlib.Path,
+        help="Input schemas folder or single file",
     )
     parser.add_argument(
-        "-e", "--event", type=str, help="Input events folder or single file"
+        "-e",
+        "--event",
+        type=pathlib.Path,
+        help="Input events folder or single file",
     )
-    #  parser.add_argument(
-    #  "-q",
-    #  action="store_true",
-    #  default=False,
-    #  help="Enables silent mode that won't write warni
-    #  )
+
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        default=False,
+        help="Will only perform validation if 'event' field in event matches schema filename",
+    )  # added to simplify the output and remove obviously unmatched schema and event files
 
     args = parser.parse_args()
 
-    with open(args.event, "r") as fin:
-        event = json.load(fin)
+    # unify folders and single files
+    if args.event.is_file():
+        args.event = [args.event]
+    elif args.event.is_dir():
+        args.event = pathlib.Path(args.event).glob("*")
+        args.event = [file for file in args.event if file.is_file()]
 
-    with open(args.schema, "r") as fin:
-        schema = json.load(fin)
+    if args.schema.is_file():
+        args.schema = [args.schema]
+    elif args.schema.is_dir():
+        args.schema = pathlib.Path(args.schema).glob("*")
+        args.schema = [file for file in args.schema if file.is_file()]
 
-    print(f"Schema: {args.schema}, event: {args.event}")
-    print_validation_message(schema=schema, event=event)
+    # main processing loop
+    for schema_filename in args.schema:
+        for event_filename in args.event:
+            try:
+                with open(schema_filename, "r") as fin:
+                    schema = json.load(fin)
+                with open(event_filename, "r") as fin:
+                    event = json.load(fin)
+
+                if args.strict:
+                    schema_kind = schema_filename.stem
+                    if event and event.get("event", None) != schema_kind:
+                        continue
+
+                print(f"Schema: {schema_filename}")
+                print(f"Event: {event_filename}")
+                print_validation_message(schema=schema, event=event)
+
+            except Exception as e:
+                print(
+                    f"Error {e} occured during validation of {event_filename} with {schema_filename}",
+                    file=sys.stderr,
+                )
+                traceback.print_exc(file=sys.stderr)
 
 
 if __name__ == "__main__":

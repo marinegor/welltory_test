@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 import traceback
@@ -9,9 +10,18 @@ import traceback
 import jsonschema
 
 
-def print_validation_message(
-    schema, event, validator=jsonschema.Draft7Validator
-):
+def print_validation_message(schema, event, validator=jsonschema.Draft7Validator):
+    """print_validation_message.
+
+    Parameters
+    ----------
+    schema :
+                    schema dictionary which you usually get with json.load
+    event :
+                    event dictionary which you usually get with json.load
+    validator :
+                    a specific jsonschema Validator (see https://python-jsonschema.readthedocs.io/en/latest/validate/#the-validator-interface)
+    """
     validator = validator(schema=schema)
 
     # dummy checks
@@ -42,6 +52,13 @@ def print_validation_message(
 
 
 def main(args):
+    """main.
+
+    Parameters
+    ----------
+    args :
+            command-line arguments (usually sys.argv[1:])
+    """
     parser = argparse.ArgumentParser(
         description="Helps to cross-validate multiple schemas versus multiple json event files"
     )
@@ -65,6 +82,13 @@ def main(args):
         default=False,
         help="Will only perform validation if 'event' field in event matches schema filename",
     )  # added to simplify the output and remove obviously unmatched schema and event files
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        default=False,
+        help="Will supress error and full traceback that are normally written to stderr",
+    )
 
     args = parser.parse_args()
 
@@ -100,11 +124,12 @@ def main(args):
                 print_validation_message(schema=schema, event=event)
 
             except Exception as e:
-                print(
-                    f"Error {e} occured during validation of {event_filename} with {schema_filename}",
-                    file=sys.stderr,
-                )
-                traceback.print_exc(file=sys.stderr)
+                if not args.quiet:
+                    print(
+                        f"Error {e} occured during validation of {event_filename} with {schema_filename}",
+                        file=stderr,
+                    )
+                    traceback.print_exc(file=stderr)
 
 
 if __name__ == "__main__":

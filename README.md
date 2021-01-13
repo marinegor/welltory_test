@@ -29,6 +29,12 @@ optional arguments:
 ## Test output
 The result produced by the script on the test data provided by Welltory:
 
+Command:
+```bash
+./validate.py --strict --quiet -s task_folder/schema -e task_folder/event
+```
+
+Output:
 ```bash
 Schema: task_folder/schema/cmarker_created.schema
 Event: task_folder/event/fb1a0854-9535-404d-9bdd-9ec0abb6cd6c.json

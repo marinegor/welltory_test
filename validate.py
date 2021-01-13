@@ -6,6 +6,7 @@ import os
 import pathlib
 import sys
 import traceback
+from collections import defaultdict, Counter
 
 import jsonschema
 
@@ -33,7 +34,12 @@ def print_validation_message(schema, event, validator=jsonschema.Draft7Validator
     else:
         # main logic
         event = event["data"]
+
+        # true only if there was no descent into validation loop meaning that json is valid for this schema
+        pair_is_valid = True
+
         for idx, error in enumerate(validator.descend(event, schema)):
+            pair_is_valid = False
             error_message = error.message
             schema_location = "::".join(error.absolute_schema_path)
             event_location = "::".join(error.absolute_path)
@@ -49,6 +55,8 @@ def print_validation_message(schema, event, validator=jsonschema.Draft7Validator
             print(f"  Message {idx+1}: {error_message}")
             print(f"    Location in schema file: {schema_location}")
             print(f"    Location in event file:  {event_location}")
+
+        return pair_is_valid
 
 
 def main(args):
@@ -106,6 +114,9 @@ def main(args):
         args.schema = [file for file in args.schema if file.is_file()]
 
     # main processing loop
+    invalid_schemas = defaultdict(lambda: 0)
+    invalid_events = defaultdict(lambda: 0)
+
     for schema_filename in args.schema:
         for event_filename in args.event:
             try:
@@ -121,7 +132,10 @@ def main(args):
 
                 print(f"Schema: {schema_filename}")
                 print(f"Event: {event_filename}")
-                print_validation_message(schema=schema, event=event)
+                pair_is_valid = print_validation_message(schema=schema, event=event)
+                if not pair_is_valid:
+                    invalid_schemas[schema_filename] += 1
+                    invalid_events[event_filename] += 1
 
             except Exception as e:
                 if not args.quiet:
@@ -130,6 +144,14 @@ def main(args):
                         file=stderr,
                     )
                     traceback.print_exc(file=stderr)
+
+    print("-" * 40)
+    print("Invalid schema files occured in invalid pairs:")
+    for key, value in sorted(invalid_schemas.items(), key=lambda x: x[1], reverse=True):
+        print(f"{value} times in file {key}")
+    print("Invalid event files occured in invalid pairs:")
+    for key, value in sorted(invalid_events.items(), key=lambda x: x[1], reverse=True):
+        print(f"{value} times in file {key}")
 
 
 if __name__ == "__main__":

@@ -103,8 +103,22 @@ Event: task_folder/event/bb998113-bc02-4cd1-9410-d9ae94f53eb0.json
   Message 1: 'unique_id' is a required property
     Location in schema file: required
     Location in event file:  <root>
+----------------------------------------
+Invalid schema files occured in invalid pairs:
+5 times in file task_folder/schema/cmarker_created.schema
+4 times in file task_folder/schema/label_selected.schema
+3 times in file task_folder/schema/sleep_created.schema
+2 times in file task_folder/schema/workout_created.schema
+Invalid event files occured in invalid pairs:
+4 times in file task_folder/event/29f0bfa7-bd51-4d45-93be-f6ead1ae0b96.json
+4 times in file task_folder/event/a95d845c-8d9e-4e07-8948-275167643a40.json
+1 times in file task_folder/event/fb1a0854-9535-404d-9bdd-9ec0abb6cd6c.json
+1 times in file task_folder/event/ffe6b214-d543-40a8-8da3-deb0dc5bbd8c.json
+1 times in file task_folder/event/e2d760c3-7e10-4464-ab22-7fda6b5e2562.json
+1 times in file task_folder/event/1eba2aa1-2acf-460d-91e6-55a8c3e3b7a3.json
+1 times in file task_folder/event/cc07e442-7986-4714-8fc2-ac2256690a90.json
+1 times in file task_folder/event/bb998113-bc02-4cd1-9410-d9ae94f53eb0.json
 ```
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
-
